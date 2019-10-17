@@ -2,11 +2,11 @@
 # Created by: Shaun Spinelli 2019/10/12
 
 import logging as lg
-_logger = lg.getLogger("train")
 
 import torch
 
 # from . import metrics
+_logger = lg.getLogger("train")
 
 
 class Training:
@@ -35,11 +35,10 @@ class Training:
         data, labels = batch
         preds = self.model(data)
         loss = self.loss(preds, labels)
-        self.metrics.update(preds, labels, self.step)
+        self.metrics.update(preds, labels, self.step, one_hot=False)
         if self.metrics.writer:
             self.metrics.writer.add_scalar("loss", loss.item(), self.step)
         # _logger.debug(f'Loss: {loss.item()}')
-        print(f'Loss: {loss.item()}')
 
         self.optim.zero_grad()  # zero gradients
         loss.backward()  # calculate gradients
@@ -47,9 +46,11 @@ class Training:
 
     def train(self):
         for i in range(self.epochs):
-            _logger.info(f'Epoch {i}/{self.epochs}')
+            # _logger.info(f'Epoch {i}/{self.epochs}')
             print(f'Epoch {i}/{self.epochs}')
             for batch in self.data:
                 self.train_step(batch)
                 self.step += 1
             self.metrics.reset()
+
+    # TODO: add train loop to save checkpoint on fail
