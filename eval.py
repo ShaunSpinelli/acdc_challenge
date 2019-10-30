@@ -14,17 +14,17 @@ import dataset
 
 
 class Eval:
-    def __init__(self, metrics, loss, data, model, checkpoint_path):
+    def __init__(self, metric_man, loss, data, model, checkpoint_path):
         """Evaluation runner
 
         Args:
-            metrics (MetricManager):
+            metric_man (MetricManager):
             loss (torch.nn.modules.loss):
             data (DataLoader):
             model ():
         """
 
-        self.metrics = metrics
+        self.metrics = metric_man
         self.loss = loss
         self.model = model
         self.data = data

@@ -15,7 +15,7 @@ class Metric:
         self.running_total = 0
         self.call_count = 0
 
-    def __call__(self, predictions, labels,):
+    def __call__(self, predictions, labels, ):
         """Calculate streaming result"""
         self.call_count += 1
         res = self.calculation(predictions, labels)
@@ -69,25 +69,31 @@ class Miou(Metric): # Note may want to ignore back ground class
         cmx = get_cmx(predictions, labels)
         return self.get_miou(cmx)
 
+
 class Dice(Metric):
     def __str__(self):
         return "Dice"
 
-    def calculation(self, predictions, labels):
-        intersection = np.sum(y_true * y_pred, axis=[1, 2, 3])
-        union = np.sum(y_true, axis=[1, 2, 3]) + K.sum(y_pred, axis=[1, 2, 3])
+    def calculation(self, predictions, labels, smooth):
+        intersection = np.sum(labels * predictions, axis=[1, 2, 3])
+        union = np.sum(labels, axis=[1, 2, 3]) + np.sum(predictions, axis=[1, 2, 3])
         dice = np.mean((2. * intersection + smooth) / (union + smooth), axis=0)
         return dice
+
 
 class MetricManager:
     """Mangers all metrics during training"""
     def __init__(self, metrics, writer=None):
+        """
+
+        Args:
+            metrics (list(Metrics): list of metrics
+            writer (Summary):
+        """
         self.metrics = metrics
         self.writer = writer
 
-    def update(self, preds, labels, step, one_hot=False):
-        if one_hot:
-            labels = labels.argmax(dim=1)
+    def update(self, preds, labels, step):
         for m in self.metrics:
             self._update_metric(m, preds.detach().cpu(), labels.detach().cpu(), step)
 

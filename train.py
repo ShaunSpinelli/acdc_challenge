@@ -32,6 +32,7 @@ class Training:
         self.step = 0
 
     def train_step(self, batch):
+        # data.cuda(), labels.cuda() = batch
         data, labels = batch
         preds = self.model(data)
         loss = self.loss(preds, labels)
@@ -44,7 +45,10 @@ class Training:
         loss.backward()  # calculate gradients
         self.optim.step()  # updated weights
 
-    def train(self):
+    def save_checkoint(self):
+        raise NotImplementedError
+
+    def train_loop(self):
         for i in range(self.epochs):
             # _logger.info(f'Epoch {i}/{self.epochs}')
             print(f'Epoch {i}/{self.epochs}')
@@ -52,5 +56,12 @@ class Training:
                 self.train_step(batch)
                 self.step += 1
             self.metrics.reset()
+            self.save_checkoint()
 
-    # TODO: add train loop to save checkpoint on fail
+    def train_cancel(self):
+        try:
+            self.train_loop()
+        except KeyboardInterrupt:
+            _logger.debug("Quitting due to user cancel")
+            self.save_checkoint()
+

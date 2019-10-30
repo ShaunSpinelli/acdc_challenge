@@ -21,7 +21,6 @@ class HeartDataSet(Dataset):
         label_path = [file for file in self.labels_list if str(image_path.name) in str(file)]
         assert len(label_path) == 1  # make sure there only one label per image
         label = torch.tensor(self.resize(np.load(label_path[0]))).long()#.to(torch.int64)
-        # label = torch.reshape(torch.nn.functional.one_hot(label, 4), (4, *self.size))#.double()
 
         image = torch.tensor((self.resize(np.load(image_path)) / 255)[None], dtype=torch.float)#.double()
         return image, label
@@ -32,5 +31,5 @@ class HeartDataSet(Dataset):
     def __getitem__(self, idx):
         image_path = self.images_list[idx]
         image, label = self.get_pair(image_path)
-        return image.cuda(), label.cuda()#.float()
+        return image, label
 
