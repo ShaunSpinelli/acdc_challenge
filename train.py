@@ -10,7 +10,7 @@ _logger = lg.getLogger("train")
 
 
 class Training:
-    def __init__(self, metrics, loss, optim, data, epochs, model):
+    def __init__(self, metrics, loss, optim, data, epochs, model, save_dir):
         """Training runner
 
         Args:
@@ -20,6 +20,7 @@ class Training:
             data (DataLoader):
             epochs (int):
             model ():
+            save_dir (str): directory to save model
         """
 
         self.metrics = metrics
@@ -28,6 +29,7 @@ class Training:
         self.data = data
         self.model = model
         self.epochs = epochs
+        self.save_dir = save_dir
 
         self.step = 0
 
@@ -45,8 +47,9 @@ class Training:
         loss.backward()  # calculate gradients
         self.optim.step()  # updated weights
 
-    def save_checkoint(self):
-        raise NotImplementedError
+    def save_checkpoint(self):
+        """Save checkpoint with current step number"""
+        torch.save(self.model.state_dict(), f'{self.save_dir}/model-{self.step}')
 
     def train_loop(self):
         for i in range(self.epochs):
@@ -56,12 +59,12 @@ class Training:
                 self.train_step(batch)
                 self.step += 1
             self.metrics.reset()
-            self.save_checkoint()
+            self.save_checkpoint()
 
     def train_cancel(self):
         try:
             self.train_loop()
         except KeyboardInterrupt:
             _logger.debug("Quitting due to user cancel")
-            self.save_checkoint()
+            self.save_checkpoint()
 
