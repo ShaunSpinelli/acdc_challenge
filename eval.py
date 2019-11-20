@@ -2,11 +2,14 @@
 # Created by: Shaun 2019/01/01
 
 """ Evaluation"""
+from pathlib import Path
+import time
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 import torch.nn as nn
+
 
 import metrics
 import model
@@ -22,41 +25,60 @@ class Eval:
             loss (torch.nn.modules.loss):
             data (DataLoader):
             model ():
+            checkpoint_path (str): full path to checkpoint file if using `run once` or checkpoint
+            dir if running during training.
         """
 
         self.metrics = metric_man
         self.loss = loss
         self.model = model
         self.data = data
-        self.checkpoint_path = checkpoint_path
+        self.checkpoint_path = Path(checkpoint_path)
 
         self.step = 0
+        self.current_check = -1
 
-    def train_step(self, batch):
+    def eval_step(self, batch):
         data, labels = batch
         preds = self.model(data)
         loss = self.loss(preds, labels)
-        self.metrics.update(preds, labels, self.step, one_hot=False)
+        self.metrics.update(preds, labels, self.step)
         if self.metrics.writer:
             self.metrics.writer.add_scalar("loss", loss.item(), self.step)
 
+    def run_once(self):
+        """Used to run after epoch or just once on entire eval set"""
+        self.load_checkpoint(self.checkpoint_path)
+        for batch in self.data:
+            self.train_step(batch)
+            self.step += 1
+        self.metrics.reset()
+
     def run(self):
+        """Run eval continually while model is training"""
         while True:
-            self.load_new_checkpoint()
+            self.wait_load_new_checkpoint()
             for batch in self.data:
                 self.train_step(batch)
                 self.step += 1
             self.metrics.reset()
 
-    def load_new_checkpoint(self):
-        check_point = self.get_new_check()
-        self.model.load_state_dict(torch.load(check_point))
+    def load_checkpoint(self, path):
+        """Load checkpoint from directory"""
+        self.model.load_state_dict(torch.load(path))
         self.model.cpu()
         self.model.eval()
 
-    def get_new_check(self):
-        """ Check to see if new checkpoint then run eval"""
-        return self.checkpoint_path
+    def wait_load_new_checkpoint(self):
+        """Waits till new checkpoint then loads checkpoint"""
+        while True:
+            models_idx = [int(m.stem[-1]) for m in self.checkpoint_path.iterdir()].sort()
+            latest = models_idx[-1]
+            if latest > self.current_check:
+                latest = self.current_check
+                self.load_checkpoint(f'{self.checkpoint_path}/model-{latest}.pth')
+                break
+            time.sleep(30)
 
 
 def run_eval(data, checkpoints_dir, log_dir):
