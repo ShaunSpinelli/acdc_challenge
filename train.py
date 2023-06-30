@@ -2,6 +2,7 @@
 # Created by: Shaun Spinelli 2019/10/12
 
 import logging as lg
+from tqdm import tqdm
 
 import torch
 
@@ -34,11 +35,11 @@ class Training:
         self.step = 0
 
     def train_step(self, batch):
-        # data.cuda(), labels.cuda() = batch
         data, labels = batch
-        preds = self.model(data)
-        loss = self.loss(preds, labels)
-        self.metrics.update(preds, labels, self.step, one_hot=False)
+        # data.cuda(), labels.cuda()
+        preds = self.model(data.cuda())
+        loss = self.loss(preds, labels.cuda())
+        self.metrics.update(preds, labels, self.step)
         if self.metrics.writer:
             self.metrics.writer.add_scalar("loss", loss.item(), self.step)
         # _logger.debug(f'Loss: {loss.item()}')
@@ -49,19 +50,19 @@ class Training:
 
     def save_checkpoint(self):
         """Save checkpoint with current step number"""
-        torch.save(self.model.state_dict(), f'{self.save_dir}/model-{self.step}')
+        torch.save(self.model.state_dict(), f'{self.save_dir}/model-{self.step}.pth')
 
     def train_loop(self):
         for i in range(self.epochs):
             # _logger.info(f'Epoch {i}/{self.epochs}')
             print(f'Epoch {i}/{self.epochs}')
-            for batch in self.data:
+            for batch in tqdm(self.data):
                 self.train_step(batch)
                 self.step += 1
             self.metrics.reset()
             self.save_checkpoint()
 
-    def train_cancel(self):
+    def run(self):
         try:
             self.train_loop()
         except KeyboardInterrupt:
