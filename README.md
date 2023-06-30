@@ -36,17 +36,4 @@ The data format was NIfITI format which is a format developed by Neuroimaging In
 
 ## Approach
 
-Selected model 2d unet Although the 3d 2d unet ensemble showed the best results it would be computinally heavy o that why the 2d unet was decided on.
-
-Experiment with different loss functions
-cross entropy, DICE
-
-## Results
-
-### Training
-
-
-### Competition Results
-
-
-## Future Improvements Experiments
+Selected model 2d unet Although the 3d 2d unet ensemble showed the best results it would be computationally heavy thats why the 2d unet was decided on.
